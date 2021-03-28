@@ -10,6 +10,7 @@ import (
 	"sync"
 )
 
+//mutex to prevent command collision in send function
 var mutex sync.Mutex
 
 // GetUUID returns a new UUID based on /dev/urandom (unix).
@@ -41,6 +42,7 @@ func command(action string, id string, v ...interface{}) ([]byte, error) {
 }
 
 func send(ctx context.Context, client Client, action, id string, v interface{}) (Response, error) {
+	//lock, others calls to this function will wait until this function ends
 	mutex.Lock()
 	defer mutex.Unlock()
 	if id == "" {
