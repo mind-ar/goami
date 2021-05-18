@@ -3,14 +3,18 @@ goami
 Asterisk Manager Interface (AMI) client in Go.
 
 ## About
-This code is based on C [libami](http://sourceforge.net/projects/amsuite/files/libami/) library interface
+This repository is a fork of github.com/heltonmarx/goami/ami, with some additional features:
+* Connection Pool
+* Event Broker
+
+
 
 ## Installation and Requirements
 
 The following command will install the AMI client.
 
 ```sh
-go get -u github.com/heltonmarx/goami/ami
+go get -u gitlab.com/mind-framework/asterisk/goami
 ```
 
 To test this package with Asterisk it's necessary set the file `/etc/asterisk/manager.conf` with configuration bellow:
@@ -38,7 +42,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/heltonmarx/goami/ami"
+	"gitlab.com/mind-framework/asterisk/goami/ami"
 )
 
 var (

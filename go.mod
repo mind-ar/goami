@@ -1,4 +1,4 @@
-module github.com/heltonmarx/goami
+module gitlab.com/mind-framework/asterisk/goami
 
 go 1.12
 
