@@ -12,6 +12,7 @@ import (
 	"sync"
 )
 
+//NewSpool retorna un nuevo pool de llamadas salientes
 func NewSpool(callLimit int) (*Spool, error) {
 	return &Spool{
 		//ctx:      ctx,
@@ -20,14 +21,15 @@ func NewSpool(callLimit int) (*Spool, error) {
 	}, nil
 }
 
+//Spool contiene los datos y funciones para manejar pool de llamadas salientes
 type Spool struct {
 	ctx   context.Context
 	mutex *sync.Mutex
 	queue chan ami.OriginateData
 }
 
-//NewCall agrega una nueva llamada a la cola de llamadas del discador
-func (s *Spool) NewCall(data ami.OriginateData) error {
+//Originate agrega una nueva llamada a la cola de llamadas del discador
+func (s *Spool) Originate(data ami.OriginateData) error {
 	s.queue <- data
 	return nil
 }
@@ -50,38 +52,3 @@ func (s *Spool) start() error {
 
 	}
 }
-
-/*
-//start ejecuta un bucle infinito procesando las llamadas en cola
-func (s *Spool) start() error {
-	sleepTime := 2000 * time.Millisecond
-	for {
-		call, err := s.getNextCall()
-		if call == nil || err != nil {
-			time.Sleep(sleepTime)
-			continue
-		}
-
-		//simulo una llamada
-		time.Sleep(10 * time.Second)
-
-		log.Trace().Interface("call", call).Msg("analizando llamada en queye")
-	}
-}
-
-//getNextCall devuelve la llamada en la lista
-func (s *Spool) getNextCall() (*ami.OriginateData, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	if s.queue.Len() == 0 {
-		return nil, nil
-	}
-	e := s.queue.Front()
-
-	s.queue.Remove(e)
-	call := e.Value.(ami.OriginateData)
-	return &call, nil
-
-}
-*/
