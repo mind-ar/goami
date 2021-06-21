@@ -3,9 +3,9 @@ package spool
 import (
 	//"container/list"
 	"context"
-	"math/rand"
+	//"math/rand"
+	//"time"
 	//"errors"
-	"time"
 
 	log "github.com/rs/zerolog/log"
 	"gitlab.com/mind-framework/asterisk/goami/ami"
@@ -35,20 +35,53 @@ func (s *Spool) Originate(data ami.OriginateData) error {
 }
 
 //Start inicia el servicio spool
-func (s *Spool) Start() {
-	go s.start()
+func (s *Spool) Start(ctx context.Context, pool *ami.Pool) {
+	go s.start(ctx, pool)
 }
 
-func (s *Spool) start() error {
+func (s *Spool) start(ctx context.Context, pool *ami.Pool) error {
 	for {
 		select {
 		case call := <-s.queue:
-			log.Trace().Interface("call", call).Msg("analizando llamada en queye")
+			socket, err := pool.GetSocket()
+			if err != nil {
+				log.Error().Err(err).Msg("Error al Obtener llamada del pool")
+			}
+
+			uuid, _ := ami.GetUUID()
+			call.ChannelID = uuid
+			log.Trace().Interface("call", call).Msg("analizando llamada en queue")
+			response, err := ami.Originate(ctx, socket, uuid, call)
+			if err != nil {
+				log.Error().Err(err).Msg("Error al enviar llamada")
+			}
+			actionID := response["ActionID"][0]
+			log.Debug().Interface("response", response).Interface("ActionID", actionID).Msg("")
+			waitForHangUp(ctx, socket, uuid)
+			log.Debug().Msg("Llamada Finalizada")
+
+			pool.Close(socket, false)
 		}
 
 		//Simulo una llamada
-		r := rand.Intn(5000)
-		time.Sleep(time.Duration(r+5000) * time.Millisecond)
+		//r := rand.Intn(5000)
+		//time.Sleep(time.Duration(r+15000) * time.Millisecond)
+
+	}
+}
+
+func waitForHangUp(ctx context.Context, socket ami.Client, uuid string) {
+	log.Debug().Str("uuid", uuid).Msg("Esperando finalizacion de llamada")
+	for {
+		events, _ := ami.Events(ctx, socket)
+		if len(events["Uniqueid"]) == 0 || events["Uniqueid"][0] != uuid {
+			continue
+		}
+		event := events["Event"][0]
+		log.Debug().Interface("events", events).Str("event", event).Msg("")
+		if event == "Hangup" {
+			return
+		}
 
 	}
 }
