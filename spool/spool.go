@@ -99,7 +99,7 @@ func (s *Spool) start(ctx context.Context, pool *ami.Pool) error {
 					return response
 				}
 				// log.Trace().Interface("response", response).Msg("Originate completado")
-				resultado := response["Response"][0]
+				resultado := response.Get("Response")
 				if resultado != "Success" {
 					return response
 				}
@@ -115,7 +115,7 @@ func (s *Spool) start(ctx context.Context, pool *ami.Pool) error {
 					8 = congested or not available (Disconnected Number)
 				*/
 				response, _ = waitForEvent(ctx, socket, uuid, "OriginateResponse")
-				resultado = response["Response"][0]
+				resultado = response.Get("Response")
 				if resultado != "Success" {
 					return response
 				}
@@ -144,56 +144,21 @@ func waitForEvent(ctx context.Context, socket ami.Client, uuid string, event str
 	// log.Debug().Str("uuid", uuid).Str("event", event).Msg("Esperando Evento")
 	for {
 		response, _ := ami.Events(ctx, socket)
-		var responseUUID string
 		// log.Debug().Interface("response", response).Interface("Uniqueid", response["Uniqueid"]).Msg("")
-		if len(response["Uniqueid"]) == 0 {
-			if len(response["UniqueID"]) == 0 {
-				continue
-			}
-			responseUUID = response["UniqueID"][0]
-		} else {
-			responseUUID = response["Uniqueid"][0]
+
+		responseUUID := response.Get("Uniqueid")
+		if responseUUID == "" {
+			responseUUID = response.Get("UniqueID")
 		}
 
 		if responseUUID != uuid {
 			continue
 		}
 
-		evt := response["Event"][0]
+		evt := response.Get("Event")
 		// log.Debug().Interface("response", response).Str("event", event).Str("evt", evt).Msg("")
 		if event == evt {
 			return response, nil
 		}
 	}
 }
-
-// func waitOriginateResponse(ctx context.Context, socket ami.Client, uuid string) (ami.Response, error) {
-// 	log.Debug().Str("uuid", uuid).Msg("Esperando Atención de llamada")
-// 	for {
-// 		events, _ := ami.Events(ctx, socket)
-// 		if len(events["Uniqueid"]) == 0 || events["Uniqueid"][0] != uuid {
-// 			continue
-// 		}
-// 		event := events["Event"][0]
-// 		log.Debug().Interface("events", events).Str("event", event).Msg("")
-// 		if event == "OriginateResponse" {
-// 			return events, nil
-// 		}
-// 	}
-// }
-
-// func waitForHangUp(ctx context.Context, socket ami.Client, uuid string) {
-// 	log.Debug().Str("uuid", uuid).Msg("Esperando finalizacion de llamada")
-// 	for {
-// 		events, _ := ami.Events(ctx, socket)
-// 		if len(events["Uniqueid"]) == 0 || events["Uniqueid"][0] != uuid {
-// 			continue
-// 		}
-// 		event := events["Event"][0]
-// 		log.Debug().Interface("events", events).Str("event", event).Msg("")
-// 		// if event == "Hangup" {
-// 		// 	return
-// 		// }
-
-// 	}
-// }
