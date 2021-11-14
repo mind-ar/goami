@@ -5,6 +5,7 @@ Asterisk Manager Interface (AMI) client in Go.
 ## About
 This repository is a fork of github.com/heltonmarx/goami/ami, with some additional features:
 * Connection Pool
+* Originate Spool
 * Event Broker
 
 
