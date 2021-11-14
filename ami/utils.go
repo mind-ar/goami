@@ -50,14 +50,27 @@ func send(ctx context.Context, client Client, action, id string, v interface{}) 
 	if err := client.Send(string(b)); err != nil {
 		return nil, err
 	}
+
 	response, err := read(ctx, client)
 	if err != nil {
 		return nil, err
 	}
-	if id == "" || id == response.Get("ActionID") {
-		return response, err
+
+	//if the action id is not provided, returns first response from ami
+	if id == "" {
+		return response, nil
 	}
-	return nil, ErrInvalidResponseActionID
+	//if action id is provided, waits until response to that action id is received
+	for {
+		if response.Get("ActionID") == id {
+			return response, nil
+		}
+		response, err = read(ctx, client)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 }
 
 func read(ctx context.Context, client Client) (Response, error) {
