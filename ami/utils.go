@@ -41,9 +41,6 @@ func command(action string, id string, v ...interface{}) ([]byte, error) {
 }
 
 func send(ctx context.Context, client Client, action, id string, v interface{}) (Response, error) {
-	if id == "" {
-		id, _ = GetUUID()
-	}
 	b, err := command(action, id, v)
 	if err != nil {
 		return nil, err
@@ -51,6 +48,11 @@ func send(ctx context.Context, client Client, action, id string, v interface{}) 
 	if err := client.Send(string(b)); err != nil {
 		return nil, err
 	}
+	//if the action id is not provided, returns first response from ami
+	if id == "" {
+		return read(ctx, client)
+	}
+	//if action id is provided, waits until response to that action id is received
 	for {
 		var response Response
 		var err error
@@ -58,8 +60,7 @@ func send(ctx context.Context, client Client, action, id string, v interface{}) 
 		if err != nil {
 			return nil, err
 		}
-		actionID := response.Get("ActionID")
-		if actionID == id {
+		if response.Get("ActionID") == id {
 			return response, nil
 		}
 	}
@@ -97,9 +98,6 @@ func parseResponse(input string) (Response, error) {
 }
 
 func requestList(ctx context.Context, client Client, action, id, event, complete string, v ...interface{}) ([]Response, error) {
-	if id == "" {
-		id, _ = GetUUID()
-	}
 	b, err := command(action, id, v)
 	if err != nil {
 		return nil, err
@@ -117,8 +115,7 @@ func requestList(ctx context.Context, client Client, action, id, event, complete
 		if err != nil {
 			return nil, err
 		}
-		actionID := rsp.Get("ActionID")
-		if actionID != id {
+		if id != "" && id != rsp.Get("ActionID") {
 			continue
 		}
 		e := rsp.Get("Event")
