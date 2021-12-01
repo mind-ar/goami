@@ -45,7 +45,11 @@ func (s *Socket) Connected() bool {
 func (s *Socket) Close(ctx context.Context) error {
 	close(s.shutdown)
 	if s.conn != nil {
-		return s.conn.Close()
+		err := s.conn.Close()
+		s.conn = nil
+		if err == nil {
+			return err
+		}
 	}
 	return nil
 }
