@@ -127,15 +127,17 @@ func (p *Pool) Close(s *Socket, force bool) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
+	defer func() {
+		recover()
+	}()
+
 	// log
 	delete(p.active, s)
 	totalSessions := len(p.active) + len(p.idle)
-	if totalSessions >= p.MinConections || force {
-		s.Close(p.ctx)
-		return nil
-	}
-
 	if s.Connected() {
+		if totalSessions >= p.MinConections || force {
+			return s.Close(p.ctx)
+		}
 		p.idle = append(p.idle, s)
 	}
 
