@@ -3,6 +3,7 @@ package ami
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -126,8 +127,8 @@ func (p *Pool) GetSocket() (*Socket, error) {
 func (p *Pool) Close(s *Socket, force bool) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-
 	defer func() {
+		fmt.Printf("error al cerrar canal")
 		recover()
 	}()
 
