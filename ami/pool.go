@@ -111,11 +111,11 @@ func (p *Pool) GetSocket() (*Socket, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("nueva conexión")
+		// fmt.Println("nueva conexión")
 	} else {
 		s = p.idle[0]
 		p.idle = p.idle[1:]
-		fmt.Printf("reutilizando conexión")
+		// fmt.Println("reutilizando conexión")
 	}
 
 	p.active[s] = true
@@ -130,17 +130,17 @@ func (p *Pool) Close(s *Socket, force bool) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	defer func() {
-		fmt.Printf("error al cerrar canal")
+		// fmt.Println("error al cerrar canal")
 		recover()
 	}()
 
 	// log
-	fmt.Printf("liberando canal")
+	// fmt.Println("liberando canal")
 	delete(p.active, s)
 	totalSessions := len(p.active) + len(p.idle)
 	if s.Connected() {
 		if totalSessions >= p.MinConections || force {
-			fmt.Printf("cerando canal")
+			// fmt.Println("cerando canal")
 			return s.Close(p.ctx)
 		}
 		p.idle = append(p.idle, s)
