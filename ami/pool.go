@@ -3,7 +3,6 @@ package ami
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 )
 
