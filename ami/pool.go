@@ -3,6 +3,7 @@ package ami
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -110,9 +111,11 @@ func (p *Pool) GetSocket() (*Socket, error) {
 		if err != nil {
 			return nil, err
 		}
+		// fmt.Println("nueva conexión")
 	} else {
 		s = p.idle[0]
 		p.idle = p.idle[1:]
+		// fmt.Println("reutilizando conexión")
 	}
 
 	p.active[s] = true
@@ -126,16 +129,20 @@ func (p *Pool) GetSocket() (*Socket, error) {
 func (p *Pool) Close(s *Socket, force bool) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+	defer func() {
+		// fmt.Println("error al cerrar canal")
+		recover()
+	}()
 
 	// log
+	// fmt.Println("liberando canal")
 	delete(p.active, s)
 	totalSessions := len(p.active) + len(p.idle)
-	if totalSessions >= p.MinConections || force {
-		s.Close(p.ctx)
-		return nil
-	}
-
 	if s.Connected() {
+		if totalSessions >= p.MinConections || force {
+			// fmt.Println("cerando canal")
+			return s.Close(p.ctx)
+		}
 		p.idle = append(p.idle, s)
 	}
 
